@@ -4,7 +4,7 @@ import { UserModel } from "../models/user.model";
 import jwt from "jsonwebtoken";
 import { signInBody } from "../schema/signIn.schema";
 import bcrypt from "bcryptjs";
-import { ZodError } from "zod";
+import { updateBody } from "../schema/updateBody.schema";
 
 const signUp = async (req: Request, res: Response) => {
   try {
@@ -117,15 +117,95 @@ const signIn = async (req: Request, res: Response) => {
   }
 };
 
-const userUpdate = async (req: Request, res: Response) => {
+const updateUserInformation = async (req: Request, res: Response) => {
   try {
+    const parsedBody = updateBody.safeParse(req.body);
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        message: "Invalid request body",
+        errors: parsedBody.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    const existingUser = await UserModel.findById(req.userId);
+    if (!existingUser) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    const { password, firstName, lastName } = parsedBody.data;
+    await UserModel.updateOne({ _id: req.userId }, parsedBody.data);
+
+    const updatedUser = await UserModel.findById(req.userId).select(
+      "-password"
+    );
+
+    res.status(200).json({
+      message: "Updated successfully",
+      success: true,
+      user: updatedUser,
+    });
   } catch (error) {
-    console.error("SignUp error", error);
+    console.error("Update user information error", error);
     res.status(500).json({
-      message: "Internal server error while signing up user",
+      message: "Internal server error while updating user information",
       success: false,
     });
   }
 };
 
-export { signUp, signIn, userUpdate };
+const bulk = async (req: Request, res: Response) => {
+  try {
+    const filter = (req.query.filter as string) || "";
+    if (!filter.trim()) {
+      return res.status(400).json({
+        message: "Filter parameter is required",
+        success: false,
+      });
+    }
+
+    const users = await UserModel.find({
+      $or: [
+        {
+          firstName: {
+            $regex: filter,
+            $options: "i", // Case-insensitive
+          },
+        },
+        {
+          lastName: {
+            $regex: filter,
+            $options: "i", // Case-insensitive
+          },
+        },
+      ],
+    })
+      .limit(50)
+      .sort({ firstName: 1, lastName: 1 });
+
+    res.status(200).json({
+      message: "Users fetched successfully",
+      success: true,
+      count: users.length,
+      user: users.map((user) => ({
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        _id: user._id,
+      })),
+    });
+  } catch (error) {
+    console.error("Get bulk users error", error);
+    res.status(500).json({
+      message: "Internal server error while getting user information",
+      success: false,
+    });
+  }
+};
+
+export { signUp, signIn, updateUserInformation, bulk };

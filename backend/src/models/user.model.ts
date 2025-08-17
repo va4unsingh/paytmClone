@@ -47,4 +47,21 @@ userSchema.pre<IUser>("save", async function (next) {
   next();
 });
 
+const hashPasswordInUpdate = async function (this: any, next: any) {
+  const update = this.getUpdate() as any;
+
+  if (update && update.password) {
+    try {
+      update.password = await bcrypt.hash(update.password, 10);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  next();
+};
+
+userSchema.pre("updateOne", hashPasswordInUpdate);
+userSchema.pre("findOneAndUpdate", hashPasswordInUpdate);
+
 export const UserModel = model("User", userSchema);
