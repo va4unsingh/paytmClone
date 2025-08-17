@@ -4,6 +4,7 @@ import { UserModel } from "../models/user.model";
 import jwt from "jsonwebtoken";
 import { signInBody } from "../schema/signIn.schema";
 import bcrypt from "bcryptjs";
+import { ZodError } from "zod";
 
 const signUp = async (req: Request, res: Response) => {
   try {
@@ -12,6 +13,10 @@ const signUp = async (req: Request, res: Response) => {
     if (!parsedBody.success) {
       return res.status(400).json({
         message: "Invalid request body",
+        errors: parsedBody.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
       });
     }
     const { username, password, firstName, lastName } = parsedBody.data;
@@ -31,14 +36,17 @@ const signUp = async (req: Request, res: Response) => {
       lastName,
     });
 
-    if (!user) {
+    const createdUser = await UserModel.findById(user._id).select("-password");
+
+    if (!createdUser) {
       return res.status(400).json({
-        message: "User not registered",
+        message: "Something went wrong while registering the userd",
       });
     }
 
     res.status(200).json({
       message: "User registered succesfully",
+      createdUser,
       success: true,
     });
   } catch (error) {
@@ -57,6 +65,10 @@ const signIn = async (req: Request, res: Response) => {
     if (!parsedBody.success) {
       return res.status(400).json({
         message: "Invalid request body",
+        errors: parsedBody.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
       });
     }
 
@@ -92,7 +104,7 @@ const signIn = async (req: Request, res: Response) => {
     };
 
     res.status(200).cookie("token", token, cookieOptions).json({
-      message: "User registered succesfully",
+      message: "User Signed In succesfully",
       success: true,
       token,
     });
@@ -104,4 +116,6 @@ const signIn = async (req: Request, res: Response) => {
     });
   }
 };
-export { signUp,signIn };
+
+
+export { signUp, signIn, profilePage };

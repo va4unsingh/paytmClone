@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { signIn, signUp } from "../controllers/user.controller";
+import { profilePage, signIn, signUp } from "../controllers/user.controller";
+import VerifyJWT from "../middlewares/middleware";
 
 const router = Router();
 
 router.route("/signUp").post(signUp);
 router.route("/signIn").post(signIn);
+
 
 export default router;
