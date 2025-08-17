@@ -40,10 +40,6 @@ const signUp = async (req: Request, res: Response) => {
     res.status(200).json({
       message: "User registered succesfully",
       success: true,
-      user: {
-        id: user._id,
-        username: user.username,
-      },
     });
   } catch (error) {
     console.error("SignUp error", error);
@@ -88,7 +84,24 @@ const signIn = async (req: Request, res: Response) => {
     const token = jwt.sign({ id: existingUser._id }, JWTSECRET, {
       expiresIn: "24h",
     });
-    
-  } catch (error) {}
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    };
+
+    res.status(200).cookie("token", token, cookieOptions).json({
+      message: "User registered succesfully",
+      success: true,
+      token,
+    });
+  } catch (error) {
+    console.error("SignUp error", error);
+    res.status(500).json({
+      message: "Internal server error while signing up user",
+      success: false,
+    });
+  }
 };
-export { signUp };
+export { signUp,signIn };
