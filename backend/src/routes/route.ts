@@ -12,6 +12,6 @@ const router = Router();
 router.route("/signUp").post(signUp);
 router.route("/signIn").post(signIn);
 router.route("/userUpdate").put(VerifyJWT, updateUserInformation);
-router.route("/bulk").post(VerifyJWT, bulk);
+router.route("/bulk").get(bulk);
 
 export default router;
