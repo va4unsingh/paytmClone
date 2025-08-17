@@ -117,5 +117,15 @@ const signIn = async (req: Request, res: Response) => {
   }
 };
 
+const userUpdate = async (req: Request, res: Response) => {
+  try {
+  } catch (error) {
+    console.error("SignUp error", error);
+    res.status(500).json({
+      message: "Internal server error while signing up user",
+      success: false,
+    });
+  }
+};
 
-export { signUp, signIn, profilePage };
+export { signUp, signIn, userUpdate };
