@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { signUpBody } from "../schema/signUp.schema";
 import { UserModel } from "../models/user.model";
 import jwt from "jsonwebtoken";
+import { signInBody } from "../schema/signIn.schema";
+import bcrypt from "bcryptjs";
 
 const signUp = async (req: Request, res: Response) => {
   try {
@@ -53,10 +55,40 @@ const signUp = async (req: Request, res: Response) => {
 };
 
 const signIn = async (req: Request, res: Response) => {
-    try {
-        const parsedBody = 
-    } catch (error) {
-        
+  try {
+    const parsedBody = signInBody.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        message: "Invalid request body",
+      });
     }
+
+    const { username, password } = parsedBody.data;
+    const existingUser = await UserModel.findOne({ username });
+
+    if (!existingUser) {
+      return res.status(400).json({
+        message: "Username doesn't exist",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid username or password",
+      });
+    }
+
+    const JWTSECRET = process.env.JWT_SECRET;
+    if (!JWTSECRET) {
+      throw new Error("JWT secret not defined");
+    }
+
+    const token = jwt.sign({ id: existingUser._id }, JWTSECRET, {
+      expiresIn: "24h",
+    });
+    
+  } catch (error) {}
 };
 export { signUp };
