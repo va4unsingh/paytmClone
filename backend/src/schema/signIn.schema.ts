@@ -1,6 +1,6 @@
 import zod, { z } from "zod";
 
-export const signUpBody = zod.object({
+export const signInBody = zod.object({
   username: z
     .string()
     .min(2, "Username must be atleast 2 characters")
@@ -10,6 +10,4 @@ export const signUpBody = zod.object({
   password: z
     .string()
     .min(6, { message: "Password must be atleast 6 characters" }),
-  firstName: z.string(),
-  lastName: z.string(),
 });
