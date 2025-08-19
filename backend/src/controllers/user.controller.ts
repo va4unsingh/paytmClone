@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { signInBody } from "../schema/signIn.schema";
 import bcrypt from "bcryptjs";
 import { updateBody } from "../schema/updateBody.schema";
+import { AccountModel } from "../models/bank.models";
 
 const signUp = async (req: Request, res: Response) => {
   try {
@@ -34,6 +35,15 @@ const signUp = async (req: Request, res: Response) => {
       password,
       firstName,
       lastName,
+    });
+
+    const userId = user._id;
+
+    // Create New account
+
+    await AccountModel.create({
+      userId,
+      balance: 1 + Math.random() * 10000,
     });
 
     const createdUser = await UserModel.findById(user._id).select("-password");
