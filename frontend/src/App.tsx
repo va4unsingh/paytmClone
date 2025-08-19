@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import SignUp from "./app/signUp";
-import SignIn from "./app/signIn";
-import Dashboard from "./app/dashboard";
-import SendMoney from "./app/sendMoney";
+import SignUp from "./pages/signUp";
+import SignIn from "./pages/signIn";
+import Dashboard from "./pages/dashboard";
+import SendMoney from "./pages/sendMoney";
 
 function App() {
   return (
