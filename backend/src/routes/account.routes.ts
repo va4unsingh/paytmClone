@@ -4,6 +4,8 @@ import {
   transferMoneyToAnotherAccount,
 } from "../controllers/user.controller";
 import VerifyJWT from "../middlewares/verifyJWT.middleware";
+import { AccountModel } from "../models/account.models";
+import mongoose from "mongoose";
 
 const router = Router();
 
