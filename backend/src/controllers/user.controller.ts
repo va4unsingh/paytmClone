@@ -250,6 +250,7 @@ const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
     );
 
     if (!account || account.balance < amount) {
+      await session.abortTransaction();
       res.status(400).json({
         message: "Insufficient balance",
       });
@@ -260,13 +261,39 @@ const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
     }).session(session);
 
     if (!toAccount) {
+      await session.abortTransaction();
       res.status(200).json({
         message: "Invalid account",
       });
     }
 
     // Perform the transfer
-    await AccountModel.updateOne()
+    await AccountModel.updateOne(
+      { userId: req.userId },
+      {
+        $inc: {
+          balance: -amount,
+        },
+      }
+    ).session(session);
+
+    await AccountModel.updateOne(
+      {
+        userId: to,
+      },
+      {
+        $inc: {
+          balance: amount,
+        },
+      }
+    );
+
+    // Commit the transaction
+    await session.commitTransaction();
+
+    res.status(200).json({
+      message: "Transfer successful",
+    });
   } catch (error) {
     console.error(
       "Error while getting transferring money to another person",
