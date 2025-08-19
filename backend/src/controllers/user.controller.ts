@@ -238,10 +238,9 @@ const accountBalance = async (req: Request, res: Response) => {
 };
 
 const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     const { amount, to } = req.body;
 
     // Fetch the accounts within the transaction
@@ -251,7 +250,8 @@ const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
 
     if (!account || account.balance < amount) {
       await session.abortTransaction();
-      res.status(400).json({
+      await session.endSession();
+      return res.status(400).json({
         message: "Insufficient balance",
       });
     }
@@ -262,7 +262,8 @@ const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
 
     if (!toAccount) {
       await session.abortTransaction();
-      res.status(200).json({
+      await session.endSession();
+      return res.status(400).json({
         message: "Invalid account",
       });
     }
@@ -286,15 +287,18 @@ const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
           balance: amount,
         },
       }
-    );
+    ).session(session);
 
     // Commit the transaction
     await session.commitTransaction();
+    await session.endSession();
 
     res.status(200).json({
       message: "Transfer successful",
     });
   } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
     console.error(
       "Error while getting transferring money to another person",
       error
