@@ -5,7 +5,8 @@ import jwt from "jsonwebtoken";
 import { signInBody } from "../schema/signIn.schema";
 import bcrypt from "bcryptjs";
 import { updateBody } from "../schema/updateBody.schema";
-import { AccountModel } from "../models/bank.models";
+import { AccountModel } from "../models/account.models";
+import mongoose from "mongoose";
 
 const signUp = async (req: Request, res: Response) => {
   try {
@@ -218,4 +219,71 @@ const bulk = async (req: Request, res: Response) => {
   }
 };
 
-export { signUp, signIn, updateUserInformation, bulk };
+const accountBalance = async (req: Request, res: Response) => {
+  try {
+    const account = await AccountModel.findOne({
+      userId: req.userId,
+    });
+
+    res.status(200).json({
+      balance: account?.balance,
+    });
+  } catch (error) {
+    console.error("Error while getting account balance", error);
+    res.status(500).json({
+      message: "Internal server error while getting user account balance",
+      success: false,
+    });
+  }
+};
+
+const transferMoneyToAnotherAccount = async (req: Request, res: Response) => {
+  try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    const { amount, to } = req.body;
+
+    // Fetch the accounts within the transaction
+    const account = await AccountModel.findOne({ userId: req.userId }).session(
+      session
+    );
+
+    if (!account || account.balance < amount) {
+      res.status(400).json({
+        message: "Insufficient balance",
+      });
+    }
+
+    const toAccount = await AccountModel.findOne({
+      userId: to,
+    }).session(session);
+
+    if (!toAccount) {
+      res.status(200).json({
+        message: "Invalid account",
+      });
+    }
+
+    // Perform the transfer
+    await AccountModel.updateOne()
+  } catch (error) {
+    console.error(
+      "Error while getting transferring money to another person",
+      error
+    );
+    res.status(500).json({
+      message: "Internal server error while money transfer",
+      success: false,
+    });
+  }
+};
+
+export {
+  signUp,
+  signIn,
+  updateUserInformation,
+  bulk,
+  accountBalance,
+  transferMoneyToAnotherAccount,
+};
