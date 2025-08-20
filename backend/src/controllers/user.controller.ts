@@ -51,7 +51,7 @@ const signUp = async (req: Request, res: Response) => {
 
     if (!createdUser) {
       return res.status(400).json({
-        message: "Something went wrong while registering the userd",
+        message: "Something went wrong while registering the user",
       });
     }
 
